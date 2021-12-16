@@ -147,13 +147,21 @@ namespace Recommendations
             });
 
             IDataView newData = mlContext.Data.LoadFromEnumerable<UserRating>(userRatingsInMemo);
+            var predictionEngine = mlContext.Model.CreatePredictionEngine<UserRating, UserRatingPrediction>(model);
 
-            IDataView predictions = model.Transform(newData);
-
-            foreach (var pred in predictions.GetColumn<float>("Score"))
+            var movieRatingPrediction = userRatingsInMemo.Select(m => predictionEngine.Predict(m));
+            foreach (var m in movieRatingPrediction)
             {
-                Console.WriteLine($"{pred}");
+                Console.WriteLine($"{m.Label} predicted score is {m.Score}");
             }
+
+
+            //IDataView predictions = model.Transform(newData);
+
+            //foreach (var pred in predictions.GetColumn<float>("Score"))
+            //{
+            //    Console.WriteLine($"{pred}");
+            //}
         }
 
         public static void SaveModel(MLContext mlContext, DataViewSchema trainingDataViewSchema, ITransformer model)
