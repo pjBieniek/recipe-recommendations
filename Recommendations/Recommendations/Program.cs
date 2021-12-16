@@ -130,7 +130,7 @@ namespace Recommendations
 
         public static void MultiplePredictions(MLContext mlContext, ITransformer model)
         {
-            Console.WriteLine("=============== Hanne would like this recipes the most ===============");
+            Console.WriteLine("=============== Hanne would like these recipes the most ===============");
 
             string fileName = "data.json";
             string path = Path.Combine(Environment.CurrentDirectory, fileName);
@@ -141,21 +141,26 @@ namespace Recommendations
                 json = r.ReadToEnd();
             }
 
-            // TODO: SPLIT THE DATA
-            var userRatingsInMemo = JsonConvert.DeserializeObject<UserRating[]>(json)
-                .Where(r => r.UserId != "hanne.svard@matprat.no")
+            var data = JsonConvert.DeserializeObject<UserRating[]>(json);
+
+            var excludeRatedContentIds = data
+                .Where(r => r.UserId == "hanne.svard@matprat.no")
+                .Select(r => r.ContentId)
+                .ToArray();
+
+            var userRatingsInMemo = data
+                .Where(r => !excludeRatedContentIds.Any(x => r.ContentId == x))
                 .Select(r => new UserRating
-            {
-                ContentId = r.ContentId,
-                Rating = default(float),
-                UserId = "hanne.svard@matprat.no", //r.UserId,
-                UserSession = r.UserSession,
-            });
+                {
+                    ContentId = r.ContentId,
+                    Rating = default(float),
+                    UserId = "hanne.svard@matprat.no", //r.UserId,
+                    UserSession = r.UserSession,
+                });
+
+
 
             var predictionEngine = mlContext.Model.CreatePredictionEngine<UserRating, UserRatingPrediction>(model);
-
-            //var movieRatingPrediction = userRatingsInMemo
-            //    .Select(m => predictionEngine.Predict(m));
 
             var movieRatingPrediction = userRatingsInMemo
                 .Select(m => predictionEngine.Predict(m))
@@ -174,13 +179,6 @@ namespace Recommendations
                 ++i;
             }
 
-
-            //IDataView predictions = model.Transform(newData);
-
-            //foreach (var pred in predictions.GetColumn<float>("Score"))
-            //{
-            //    Console.WriteLine($"{pred}");
-            //}
         }
 
         public static void SaveModel(MLContext mlContext, DataViewSchema trainingDataViewSchema, ITransformer model)
