@@ -138,18 +138,28 @@ namespace Recommendations
             }
 
             // TODO: SPLIT THE DATA
-            var userRatingsInMemo = JsonConvert.DeserializeObject<UserRating[]>(json).Select(r => new UserRating
+            var userRatingsInMemo = JsonConvert.DeserializeObject<UserRating[]>(json)
+                .Where(r => r.UserId != "hanne.svard@matprat.no")
+                .Select(r => new UserRating
             {
                 ContentId = r.ContentId,
                 Rating = default(float),
-                UserId = r.UserId,
+                UserId = "hanne.svard@matprat.no", //r.UserId,
                 UserSession = r.UserSession,
             });
 
-            IDataView newData = mlContext.Data.LoadFromEnumerable<UserRating>(userRatingsInMemo);
             var predictionEngine = mlContext.Model.CreatePredictionEngine<UserRating, UserRatingPrediction>(model);
 
-            var movieRatingPrediction = userRatingsInMemo.Select(m => predictionEngine.Predict(m));
+            //var movieRatingPrediction = userRatingsInMemo
+            //    .Select(m => predictionEngine.Predict(m));
+
+            var movieRatingPrediction = userRatingsInMemo
+                .Select(m => predictionEngine.Predict(m))
+                .Where(m => !float.IsNaN(m.Score))
+                .GroupBy(m => m.Label)
+                .Select(g => new UserRatingPrediction { Label = g.Key, Score = g.Average(s => s.Score) })
+                .OrderByDescending(m => m.Score);
+
             foreach (var m in movieRatingPrediction)
             {
                 Console.WriteLine($"{m.Label} predicted score is {m.Score}");
