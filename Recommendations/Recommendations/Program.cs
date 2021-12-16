@@ -64,9 +64,10 @@ namespace Recommendations
         public static (IDataView training, IDataView test) LoadData(MLContext mlContext)
         {
             string fileName = "data.json";
-            string path = Path.Combine(@"C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations", fileName);
+            string path = Path.Combine(Environment.CurrentDirectory, fileName);
 
             string json = "";
+
             using (StreamReader r = new StreamReader(path))
             {
                 json = r.ReadToEnd();
@@ -166,8 +167,7 @@ namespace Recommendations
         {
             // Save the trained model to .zip file
             // <SnippetSaveModel>
-            //var modelPath = Path.Combine(Environment.CurrentDirectory, "Data", "MovieRecommenderModel.zip");
-            var modelPath = Path.Combine(@"C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations", "MovieRecommenderModel.zip");
+            var modelPath = Path.Combine(Environment.CurrentDirectory, "MovieRecommenderModel.zip");
 
             Console.WriteLine("=============== Saving the model to a file ===============");
             mlContext.Model.Save(model, trainingDataViewSchema, modelPath);
