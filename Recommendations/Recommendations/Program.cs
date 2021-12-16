@@ -46,7 +46,7 @@ namespace Recommendations
 
             MultiplePredictions(context, model);
 
-            UseModelForSinglePrediction(context, model);
+            //UseModelForSinglePrediction(context, model);
         }
 
         public static (IDataView training, IDataView test) LoadData(MLContext mlContext)
@@ -81,7 +81,7 @@ namespace Recommendations
                 MatrixColumnIndexColumnName = "userIdEncoded",
                 MatrixRowIndexColumnName = "contentIdEncoded",
                 LabelColumnName = "Rating",
-                NumberOfIterations = 20,
+                NumberOfIterations = 50,
                 ApproximationRank = 100
             };
 
@@ -107,8 +107,10 @@ namespace Recommendations
 
         public static void UseModelForSinglePrediction(MLContext mlContext, ITransformer model)
         {
-            Console.WriteLine("=============== Making a prediction ===============");
+            Console.WriteLine("=============== Making a test prediction ===============");
             var predictionEngine = mlContext.Model.CreatePredictionEngine<UserRating, UserRatingPrediction>(model);
+
+            Console.WriteLine("=============== Checking recipe 91807 ===============");
 
             var testInput = new UserRating { UserId = "hanne.svard@matprat.no", ContentId = 91807 };
 
@@ -116,17 +118,19 @@ namespace Recommendations
 
             if (Math.Round(movieRatingPrediction.Score, 1) > 3.5)
             {
-                Console.WriteLine("Recipe " + testInput.ContentId + " is recommended for user " + testInput.UserId + " score " + movieRatingPrediction.Score);
+                Console.WriteLine("Recipe " + testInput.ContentId + " is recommended for user " +
+                                  testInput.UserId); //+ " score " + movieRatingPrediction.Score);
             }
             else
             {
-                Console.WriteLine("Recipe " + testInput.ContentId + " is not recommended for user " + testInput.UserId + " score " + movieRatingPrediction.Score);
+                Console.WriteLine("Recipe " + testInput.ContentId + " is not recommended for user " +
+                                  testInput.UserId); //+ " score " + movieRatingPrediction.Score);
             }
         }
 
         public static void MultiplePredictions(MLContext mlContext, ITransformer model)
         {
-            Console.WriteLine("=============== Making a predictionssssssssssszzzzzzzzz ===============");
+            Console.WriteLine("=============== Hanne would like this recipes the most ===============");
 
             string fileName = "data.json";
             string path = Path.Combine(Environment.CurrentDirectory, fileName);
@@ -158,11 +162,16 @@ namespace Recommendations
                 .Where(m => !float.IsNaN(m.Score))
                 .GroupBy(m => m.Label)
                 .Select(g => new UserRatingPrediction { Label = g.Key, Score = g.Average(s => s.Score) })
-                .OrderByDescending(m => m.Score);
+                .OrderByDescending(m => m.Score)
+                .Take(20);
 
+            var i = 1;
             foreach (var m in movieRatingPrediction)
             {
-                Console.WriteLine($"{m.Label} predicted score is {m.Score}");
+                
+                //Console.WriteLine($"{m.Label} predicted score is {m.Score}");
+                Console.WriteLine($"{i}. {m.Label} link: test.matprat.no/secureUI/CMS/#context=epi.cms.contentdata:///{m.Label}");
+                ++i;
             }
 
 
@@ -178,7 +187,7 @@ namespace Recommendations
         {
             var modelPath = Path.Combine(Environment.CurrentDirectory, "MovieRecommenderModel.zip");
 
-            Console.WriteLine("=============== Saving the model to a file ===============");
+            Console.WriteLine("\n\n=============== Saving the model to a file  ===============\n\n");
             mlContext.Model.Save(model, trainingDataViewSchema, modelPath);
         }
 
