@@ -92,3 +92,5 @@ C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\b
 C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\bin\x64\Debug\Microsoft.ML.Recommender.dll
 C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\bin\x64\Debug\Microsoft.ML.xml
 C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\bin\x64\Debug\Microsoft.ML.Recommender.xml
+C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\bin\x64\Debug\data.json
+C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\bin\x64\Debug\ratings.json

@@ -64,7 +64,8 @@ namespace Recommendations
         public static (IDataView training, IDataView test) LoadData(MLContext mlContext)
         {
             string fileName = "data.json";
-            string path = Path.Combine(@"C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations", fileName);
+            string path = Path.Combine(Environment.CurrentDirectory, fileName);
+            //string path = Path.Combine(@"C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations", fileName);
 
             string json = "";
             using (StreamReader r = new StreamReader(path))
@@ -166,12 +167,17 @@ namespace Recommendations
         {
             // Save the trained model to .zip file
             // <SnippetSaveModel>
-            //var modelPath = Path.Combine(Environment.CurrentDirectory, "Data", "MovieRecommenderModel.zip");
-            var modelPath = Path.Combine(@"C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations", "MovieRecommenderModel.zip");
+            var modelPath = Path.Combine(Environment.CurrentDirectory, "MovieRecommenderModel.zip");
+            //var modelPath = Path.Combine(@"C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations", "MovieRecommenderModel.zip");
 
             Console.WriteLine("=============== Saving the model to a file ===============");
             mlContext.Model.Save(model, trainingDataViewSchema, modelPath);
             // </SnippetSaveModel>
+        }
+
+        public static void LoadModel(MLContext mlContext, string modelPath, out DataViewSchema modelSchema)
+        {
+            ITransformer trainedModel = mlContext.Model.Load("model.zip", out modelSchema);
         }
     }
 }
