@@ -87,3 +87,8 @@ C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\o
 C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\obj\x64\Debug\Recommendations.csproj.CopyComplete
 C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\obj\x64\Debug\Recommendations.exe
 C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\obj\x64\Debug\Recommendations.pdb
+C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\bin\x64\Debug\MatrixFactorizationNative.dll
+C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\bin\x64\Debug\Microsoft.ML.dll
+C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\bin\x64\Debug\Microsoft.ML.Recommender.dll
+C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\bin\x64\Debug\Microsoft.ML.xml
+C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations\bin\x64\Debug\Microsoft.ML.Recommender.xml

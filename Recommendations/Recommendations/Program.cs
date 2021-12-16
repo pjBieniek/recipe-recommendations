@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.ML;
 using Microsoft.ML.Data;
+using Microsoft.ML.Trainers;
 using Newtonsoft.Json;
 
 namespace Recommendations
@@ -21,6 +22,47 @@ namespace Recommendations
 
             var context = new MLContext();
 
+            //string fileName = "data.json";
+            //string path = Path.Combine(@"C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations", fileName);
+
+            //string json = "";
+            //using (StreamReader r = new StreamReader(path))
+            //{
+            //    json = r.ReadToEnd();
+            //}
+
+            //var userRatings = JsonConvert.DeserializeObject<UserRating[]>(json);
+
+            //foreach (var x in userRatings)
+            //{
+            //    Console.WriteLine($"{x.UserId} {x.ContentId}");
+            //}
+
+            var (trainingDataView, testDataView) = LoadData(context);
+
+            ITransformer model = BuildAndTrainModel(context, trainingDataView);
+            // </SnippetBuildTrainModelMain>
+
+            // Evaluate quality of model
+            // <SnippetEvaluateModelMain>
+            EvaluateModel(context, testDataView, model);
+            // </SnippetEvaluateModelMain>
+
+            // Use model to try a single prediction (one row of data)
+            // <SnippetUseModelMain>
+            UseModelForSinglePrediction(context, model);
+            // </SnippetUseModelMain>
+
+            // Save model
+            // <SnippetSaveModelMain>
+            SaveModel(context, trainingDataView.Schema, model);
+
+            Console.ReadLine();
+        }
+
+
+        public static (IDataView training, IDataView test) LoadData(MLContext mlContext)
+        {
             string fileName = "data.json";
             string path = Path.Combine(@"C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations", fileName);
 
@@ -30,93 +72,106 @@ namespace Recommendations
                 json = r.ReadToEnd();
             }
 
-            var userRatings = JsonConvert.DeserializeObject<List<UserRating>>(json);
+            // TODO: SPLIT THE DATA
+            var userRatingsInMemo = JsonConvert.DeserializeObject<UserRating[]>(json);
+            var splitingPoint = (int)(Math.Floor(userRatingsInMemo.Length * 0.7));
+            var forTraning = userRatingsInMemo.Take(splitingPoint);
+            var forTest = userRatingsInMemo.Skip(splitingPoint);
 
-            foreach (var x in userRatings)
-            {
-                Console.WriteLine($"{x.UserId} {x.ContentId}");
-            }
+            IDataView trainingDataView = mlContext.Data.LoadFromEnumerable<UserRating>(forTraning);
+            IDataView testDataView = mlContext.Data.LoadFromEnumerable<UserRating>(forTest);
 
-            //var reader = context.Data.TextReader(new TextLoader.Arguments()
-            //{
-            //    Separator = ",",
-            //    HasHeader = true,
-            //    Column = new[]
-            //    {
-            //        new TextLoader.Column("Label", DataKind.R4, 0),
-            //        new TextLoader.Column("user", DataKind.R4, 1),
-            //        new TextLoader.Column("bookid", DataKind.R4, 2),
-            //    }
-            //});
-
-            //IDataView data = reader.Read(trainingDataPath);
-
-            var (trainData, testData) = context.BinaryClassification.TrainTestSplit(userRatings, testFraction: 0.2);
-
-            //var pipeline = context.Transforms.Categorical.MapValueToKey("user", "userIdEncoded")
-            //    .Append(context.Transforms.Categorical.MapValueToKey("bookid", "bookIdEncoded"))
-            //    .Append(new MatrixFactorizationTrainer(context, "Label", "userIdEncoded", "bookIdEncoded",
-            //        advancedSettings: s => { s.NumIterations = 20; s.K = 100; }));
-
-            //Console.WriteLine("Training recommender" + Environment.NewLine);
-            //var model = pipeline.Fit(trainData);
-
-            //var prediction = model.Transform(testData);
-            //var metrics = context.Regression.Evaluate(prediction);
-
-            //Console.WriteLine($"Model metrics: RMS - {metrics.Rms} R^2 - {metrics.RSquared}" + Environment.NewLine);
-
-            //var predictionFunc = model.MakePredictionFunction<BookRating, BookRatingPrediction>(context);
-
-            //var bookPrediction = predictionFunc.Predict(new BookRating
-            //{
-            //    user = 99,
-            //    bookid = bookPredictionId
-            //});
-
-            //var bookData = LoadBookData();
-
-            //Console.WriteLine($"Predicted rating - {Math.Round(bookPrediction.Score, 1)} for book {bookData.FirstOrDefault(b => b.BookId == bookPredictionId).BookTitle}");
-
-            //Console.ReadLine();
+            return (trainingDataView, testDataView);
+            // </SnippetLoadData>
         }
 
-        //private static IList<Book> LoadBookData()
-        //{
-        //    var result = new List<Book>();
+        public static ITransformer BuildAndTrainModel(MLContext mlContext, IDataView trainingDataView)
+        {
+            // Add data transformations
+            // <SnippetDataTransformations>
+            IEstimator<ITransformer> estimator = mlContext.Transforms.Conversion.MapValueToKey(outputColumnName: "userIdEncoded", inputColumnName: "UserId")
+                .Append(mlContext.Transforms.Conversion.MapValueToKey(outputColumnName: "contentIdEncoded", inputColumnName: "ContentId"));
+            // </SnippetDataTransformations>
 
-        //    var reader = File.OpenRead($"{dataLocation}/bookfeatures.csv");
+            // Set algorithm options and append algorithm
+            // <SnippetAddAlgorithm>
+            var options = new MatrixFactorizationTrainer.Options
+            {
+                MatrixColumnIndexColumnName = "userIdEncoded",
+                MatrixRowIndexColumnName = "contentIdEncoded",
+                LabelColumnName = "Rating",
+                NumberOfIterations = 20,
+                ApproximationRank = 100
+            };
 
-        //    var isHeader = true;
-        //    var line = String.Empty;
+            var trainerEstimator = estimator.Append(mlContext.Recommendation().Trainers.MatrixFactorization(options));
+            // </SnippetAddAlgorithm>
 
-        //    using (var streamReader = new StreamReader(reader))
-        //    {
-        //        while (!streamReader.EndOfStream)
-        //        {
-        //            if (isHeader)
-        //            {
-        //                line = streamReader.ReadLine();
-        //                isHeader = false;
-        //            }
+            // <SnippetFitModel>
+            Console.WriteLine("=============== Training the model ===============");
+            ITransformer model = trainerEstimator.Fit(trainingDataView);
 
-        //            line = streamReader.ReadLine();
-        //            var data = line.Split(',');
 
-        //            var book = new Book
-        //            {
-        //                BookId = int.Parse(data[3].ToString()),
-        //                BookTitle = data[8].ToString(),
-        //                Author = data[1].ToString(),
-        //                Genre1 = data[4].ToString(),
-        //                Genre2 = data[5].ToString()
-        //            };
+            return model;
+            // </SnippetFitModel>
+        }
 
-        //            result.Add(book);
-        //        }
-        //    }
+        public static void EvaluateModel(MLContext mlContext, IDataView testDataView, ITransformer model)
+        {
+            // Evaluate model on test data & print evaluation metrics
+            // <SnippetTransform>
+            Console.WriteLine("=============== Evaluating the model ===============");
+            var prediction = model.Transform(testDataView);
+            // </SnippetTransform>
 
-        //    return result;
-        //}
+            // <SnippetEvaluate>
+            var metrics = mlContext.Regression.Evaluate(prediction, labelColumnName: "Label", scoreColumnName: "Score");
+            // </SnippetEvaluate>
+
+            // <SnippetPrintMetrics>
+            Console.WriteLine("Root Mean Squared Error : " + metrics.RootMeanSquaredError.ToString());
+            Console.WriteLine("RSquared: " + metrics.RSquared.ToString());
+            // </SnippetPrintMetrics>
+        }
+
+        // Use model for single prediction
+        public static void UseModelForSinglePrediction(MLContext mlContext, ITransformer model)
+        {
+            // <SnippetPredictionEngine>
+            Console.WriteLine("=============== Making a prediction ===============");
+            var predictionEngine = mlContext.Model.CreatePredictionEngine<UserRating, UserRatingPrediction>(model);
+            // </SnippetPredictionEngine>
+
+            // Create test input & make single prediction
+            // <SnippetMakeSinglePrediction>
+            var testInput = new UserRating { UserId = "6", ContentId = 10 };
+
+            var movieRatingPrediction = predictionEngine.Predict(testInput);
+            // </SnippetMakeSinglePrediction>
+
+            // <SnippetPrintResults>
+            if (Math.Round(movieRatingPrediction.Score, 1) > 3.5)
+            {
+                Console.WriteLine("Movie " + testInput.ContentId + " is recommended for user " + testInput.UserId);
+            }
+            else
+            {
+                Console.WriteLine("Movie " + testInput.ContentId + " is not recommended for user " + testInput.UserId);
+            }
+            // </SnippetPrintResults>
+        }
+
+        //Save model
+        public static void SaveModel(MLContext mlContext, DataViewSchema trainingDataViewSchema, ITransformer model)
+        {
+            // Save the trained model to .zip file
+            // <SnippetSaveModel>
+            var modelPath = Path.Combine(Environment.CurrentDirectory, "Data", "MovieRecommenderModel.zip");
+
+            Console.WriteLine("=============== Saving the model to a file ===============");
+            mlContext.Model.Save(model, trainingDataViewSchema, modelPath);
+            // </SnippetSaveModel>
+        }
     }
 }
+
