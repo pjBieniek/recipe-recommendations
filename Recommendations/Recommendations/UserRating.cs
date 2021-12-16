@@ -27,14 +27,20 @@ namespace Recommendations
         public string UserId { get; set; }
 
         public string UserSession { get; set; }
-        public int Rating { get; set; }
-        public int ContentId { get; set; }
+        public float Rating { get; set; }
+        public float ContentId { get; set; }
+
+        public float Label => ContentId;
 
     }
 
-    public class UserRatingsRoot
+    public class FloatUserRating
     {
-        public IEnumerable<UserRating> UserRatings { get; set; }  
+        public float UserId { get; set; }
+
+        public float UserSession { get; set; }
+        public float Rating { get; set; }
+        public float ContentId { get; set; }
     }
     
 }

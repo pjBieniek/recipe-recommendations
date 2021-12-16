@@ -166,7 +166,8 @@ namespace Recommendations
         {
             // Save the trained model to .zip file
             // <SnippetSaveModel>
-            var modelPath = Path.Combine(Environment.CurrentDirectory, "Data", "MovieRecommenderModel.zip");
+            //var modelPath = Path.Combine(Environment.CurrentDirectory, "Data", "MovieRecommenderModel.zip");
+            var modelPath = Path.Combine(@"C:\_Files\dev\hackathon\recipe-recommendations\Recommendations\Recommendations", "MovieRecommenderModel.zip");
 
             Console.WriteLine("=============== Saving the model to a file ===============");
             mlContext.Model.Save(model, trainingDataViewSchema, modelPath);
