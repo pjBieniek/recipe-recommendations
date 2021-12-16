@@ -15,23 +15,36 @@ namespace Recommendations
     {
         static void Main(string[] args)
         {
-            var context = new MLContext();
 
-            //var (trainingDataView, testDataView) = LoadData(context);
+            RunWithTraining();
 
-            //ITransformer model = BuildAndTrainModel(context, trainingDataView);
-            //EvaluateModel(context, testDataView, model);
-
-            var modelPath = Path.Combine(Environment.CurrentDirectory, "MovieRecommenderModel.zip");
-            var model = LoadModel(context, modelPath, out var schema);
-            
-            UseModelForSinglePrediction(context, model);
-            SaveModel(context, schema, model);
-            //SaveModel(context, trainingDataView.Schema, model);
+            RunWithLoadingModel();
 
             Console.ReadLine();
         }
 
+        public static void RunWithTraining()
+        {
+            var context = new MLContext();
+
+            var (trainingDataView, testDataView) = LoadData(context);
+
+            ITransformer model = BuildAndTrainModel(context, trainingDataView);
+            EvaluateModel(context, testDataView, model);
+
+            UseModelForSinglePrediction(context, model);
+            SaveModel(context, trainingDataView.Schema, model);
+        }
+
+        public static void RunWithLoadingModel()
+        {
+            var context = new MLContext();
+
+            var modelPath = Path.Combine(Environment.CurrentDirectory, "MovieRecommenderModel.zip");
+            var model = LoadModel(context, modelPath, out var schema);
+
+            UseModelForSinglePrediction(context, model);
+        }
 
         public static (IDataView training, IDataView test) LoadData(MLContext mlContext)
         {
