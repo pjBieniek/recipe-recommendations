@@ -8,6 +8,7 @@ using Microsoft.ML;
 using Microsoft.ML.Data;
 using Microsoft.ML.Trainers;
 using Newtonsoft.Json;
+using StreamReader = System.IO.StreamReader;
 
 namespace Recommendations
 {
@@ -42,6 +43,8 @@ namespace Recommendations
 
             var modelPath = Path.Combine(Environment.CurrentDirectory, "MovieRecommenderModel.zip");
             var model = LoadModel(context, modelPath, out var schema);
+
+            MultiplePredictions(context, model);
 
             UseModelForSinglePrediction(context, model);
         }
@@ -118,6 +121,38 @@ namespace Recommendations
             else
             {
                 Console.WriteLine("Recipe " + testInput.ContentId + " is not recommended for user " + testInput.UserId + " score " + movieRatingPrediction.Score);
+            }
+        }
+
+        public static void MultiplePredictions(MLContext mlContext, ITransformer model)
+        {
+            Console.WriteLine("=============== Making a predictionssssssssssszzzzzzzzz ===============");
+
+            string fileName = "data.json";
+            string path = Path.Combine(Environment.CurrentDirectory, fileName);
+
+            string json = "";
+            using (StreamReader r = new StreamReader(path))
+            {
+                json = r.ReadToEnd();
+            }
+
+            // TODO: SPLIT THE DATA
+            var userRatingsInMemo = JsonConvert.DeserializeObject<UserRating[]>(json).Select(r => new UserRating
+            {
+                ContentId = r.ContentId,
+                Rating = default(float),
+                UserId = r.UserId,
+                UserSession = r.UserSession,
+            });
+
+            IDataView newData = mlContext.Data.LoadFromEnumerable<UserRating>(userRatingsInMemo);
+
+            IDataView predictions = model.Transform(newData);
+
+            foreach (var pred in predictions.GetColumn<float>("Score"))
+            {
+                Console.WriteLine($"{pred}");
             }
         }
 

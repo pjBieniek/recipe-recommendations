@@ -24,7 +24,13 @@ namespace Recommendations
         //}
         //]
 
-        public string UserId { get; set; }
+        private string _userId;
+
+        public string UserId
+        {
+            get => _userId ?? UserSession;
+            set => _userId = value;
+        }
 
         public string UserSession { get; set; }
         public float Rating { get; set; }
