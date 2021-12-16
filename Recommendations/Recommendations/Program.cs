@@ -144,7 +144,7 @@ namespace Recommendations
 
             // Create test input & make single prediction
             // <SnippetMakeSinglePrediction>
-            var testInput = new UserRating { UserId = "6", ContentId = 10 };
+            var testInput = new UserRating { UserId = "hanne.svard@matprat.no", ContentId = 91807 };
 
             var movieRatingPrediction = predictionEngine.Predict(testInput);
             // </SnippetMakeSinglePrediction>
@@ -152,11 +152,11 @@ namespace Recommendations
             // <SnippetPrintResults>
             if (Math.Round(movieRatingPrediction.Score, 1) > 3.5)
             {
-                Console.WriteLine("Movie " + testInput.ContentId + " is recommended for user " + testInput.UserId);
+                Console.WriteLine("Recipe " + testInput.ContentId + " is recommended for user " + testInput.UserId + " score " + movieRatingPrediction.Score);
             }
             else
             {
-                Console.WriteLine("Movie " + testInput.ContentId + " is not recommended for user " + testInput.UserId);
+                Console.WriteLine("Recipe " + testInput.ContentId + " is not recommended for user " + testInput.UserId + " score " + movieRatingPrediction.Score);
             }
             // </SnippetPrintResults>
         }
