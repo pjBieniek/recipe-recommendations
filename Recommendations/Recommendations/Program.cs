@@ -17,12 +17,17 @@ namespace Recommendations
         {
             var context = new MLContext();
 
-            var (trainingDataView, testDataView) = LoadData(context);
+            //var (trainingDataView, testDataView) = LoadData(context);
 
-            ITransformer model = BuildAndTrainModel(context, trainingDataView);
-            EvaluateModel(context, testDataView, model);
+            //ITransformer model = BuildAndTrainModel(context, trainingDataView);
+            //EvaluateModel(context, testDataView, model);
+
+            var modelPath = Path.Combine(Environment.CurrentDirectory, "MovieRecommenderModel.zip");
+            var model = LoadModel(context, modelPath, out var schema);
+            
             UseModelForSinglePrediction(context, model);
-            SaveModel(context, trainingDataView.Schema, model);
+            SaveModel(context, schema, model);
+            //SaveModel(context, trainingDataView.Schema, model);
 
             Console.ReadLine();
         }
@@ -111,9 +116,9 @@ namespace Recommendations
             mlContext.Model.Save(model, trainingDataViewSchema, modelPath);
         }
 
-        public static void LoadModel(MLContext mlContext, string modelPath, out DataViewSchema modelSchema)
+        public static ITransformer LoadModel(MLContext mlContext, string modelPath, out DataViewSchema modelSchema)
         {
-            ITransformer trainedModel = mlContext.Model.Load(modelPath, out modelSchema);
+            return mlContext.Model.Load(modelPath, out modelSchema);
         }
     }
 }
